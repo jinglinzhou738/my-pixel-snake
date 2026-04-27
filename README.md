@@ -1,358 +1,204 @@
-[gemini-code-1777281232740.html](https://github.com/user-attachments/files/27119172/gemini-code-1777281232740.html)
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Retro Pixel Snake - 怀旧掌机</title>
+    <title>Retro Pixel Snake v2.2</title>
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* 定义复古色调 */
-            --bg-color: #2c3e50;      /* 外层背景（墙壁） */
-            --screen-bg: #95a5a6;     /* 屏幕基底颜色（灰色 LCD 感） */
-            --grid-line: rgba(0,0,0,0.05); /* 隐约的网格线 */
-            --snake-head: #1e3718;    /* 深墨绿色（仿 LCD 显色） */
+            --bg-color: #2c3e50;
+            --screen-bg: #95a5a6;
+            --grid-line: rgba(0,0,0,0.05);
+            --snake-head: #1e3718;
             --snake-body: #2c5e1c;
-            --food-color: #a93226;    /* 稍微暗淡的红色像素 */
-            --btn-color: #bdc3c7;     /* 按钮颜色 */
-            --btn-active: #95a5a6;
-            --text-color: #333;
+            --food-color: #a93226;
+            --btn-color: #bdc3c7;
         }
-
-        * {
-            box-sizing: border-box;
-            touch-action: none; /* 禁用默认触摸行为（如滚动、缩放） */
-        }
-
+        * { box-sizing: border-box; touch-action: none; }
         body {
             background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'VT323', monospace; /* 使用点阵字体 */
-            color: var(--text-color);
-            overflow: hidden; /* 防止手机端出现滚动条 */
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; font-family: 'VT323', monospace;
+            overflow: hidden;
         }
-
-        /* 模拟手持掌机的外壳 */
         .handheld-container {
-            background: #34495e;
-            padding: 20px;
-            border-radius: 15px 15px 50px 15px; /* 模拟 GameBoy 式的不对称切角 */
+            background: #34495e; padding: 20px; border-radius: 15px 15px 50px 15px;
             box-shadow: 10px 10px 0px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 360px; /* 固定宽度，方便适配 */
+            display: flex; flex-direction: column; align-items: center; width: 350px;
         }
-
-        /* 顶部 UI (分数) */
         .header {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            background-color: var(--screen-bg);
-            padding: 5px 10px;
-            border: 4px solid #2c3e50;
-            border-bottom: none;
-            font-size: 24px;
-            border-radius: 5px 5px 0 0;
+            width: 100%; display: flex; justify-content: space-between;
+            background-color: var(--screen-bg); padding: 5px 10px;
+            border: 4px solid #2c3e50; border-bottom: none; font-size: 20px;
         }
-
-        /* 游戏屏幕 */
         #gameCanvas {
             background-color: var(--screen-bg);
-            /* 增加一个非常淡的像素网格背景图，增强像素感 */
-            background-image: 
-                linear-gradient(var(--grid-line) 1px, transparent 1px),
-                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-            background-size: 20px 20px; /* 对应网格大小 */
-            
-            border: 4px solid #2c3e50;
-            image-rendering: pixelated; /* 核心：保持像素边缘锐利 */
-            display: block;
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+                              linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 20px 20px;
+            border: 4px solid #2c3e50; image-rendering: pixelated;
+            transition: border-color 0.2s;
         }
-
-        /* 下方控制区域 */
         .controls {
-            margin-top: 25px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 10px;
-            justify-items: center;
-            align-items: center;
+            margin-top: 20px; width: 100%; display: grid;
+            grid-template-columns: repeat(3, 1fr); gap: 8px;
         }
-
-        /* 通用按钮样式（像素风实体键） */
         .btn {
-            background-color: var(--btn-color);
-            border: 4px solid #2c3e50;
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
-            color: #2c3e50;
-            font-size: 30px;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.1s;
+            background-color: var(--btn-color); border: 4px solid #2c3e50;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.2); color: #2c3e50;
+            font-size: 24px; display: flex; justify-content: center;
+            align-items: center; cursor: pointer; height: 55px; user-select: none;
         }
-
-        .btn:active {
-            box-shadow: 1px 1px 0px rgba(0,0,0,0.2);
-            transform: translate(3px, 3px);
-            background-color: var(--btn-active);
-        }
-
-        /* 圆形功能键 (Start/Reset) */
-        .btn-round {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 16px;
-            grid-column: 2;
-            grid-row: 2;
-        }
-
-        /* D-Pad 十字方向键样式 */
-        .btn-dpad {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
-        }
-
-        /* 定位各个方向键 */
-        #btn-up { grid-column: 2; grid-row: 1; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px rgba(0,0,0,0.2); }
+        #btn-up { grid-column: 2; }
         #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-reset { grid-column: 2; grid-row: 2; border-radius: 50%; font-size: 16px; font-weight: bold; background: #ecf0f1;}
         #btn-right { grid-column: 3; grid-row: 2; }
         #btn-down { grid-column: 2; grid-row: 3; }
-
-        /* 装饰用的扬声器孔 */
-        .speaker-holes {
-            margin-top: 20px;
-            align-self: flex-end;
-            display: flex;
-            gap: 5px;
-        }
-        .hole {
-            width: 8px;
-            height: 8px;
-            background: #2c3e50;
-            border-radius: 50%;
-        }
-
     </style>
 </head>
 <body>
 
     <div class="handheld-container">
         <div class="header">
-            <span>SNAKE</span>
+            <span>SNAKE v2.2</span>
             <span>HI: <span id="hiScoreVal">0</span></span>
             <span>SC: <span id="scoreVal">0</span></span>
         </div>
-        <canvas id="gameCanvas" width="320" height="320"></canvas>
-
+        <canvas id="gameCanvas" width="300" height="300"></canvas>
         <div class="controls">
-            <div class="btn btn-dpad" id="btn-up">↑</div>
-            <div class="btn btn-dpad" id="btn-left">←</div>
-            <div class="btn btn-round" id="btn-reset">R</div>
-            <div class="btn btn-dpad" id="btn-right">→</div>
-            <div class="btn btn-dpad" id="btn-down">↓</div>
-        </div>
-
-        <div class="speaker-holes">
-            <div class="hole"></div><div class="hole"></div><div class="hole"></div>
+            <div class="btn" id="btn-up">↑</div>
+            <div class="btn" id="btn-left">←</div>
+            <div class="btn" id="btn-reset">START</div>
+            <div class="btn" id="btn-right">→</div>
+            <div class="btn" id="btn-down">↓</div>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
-        const scoreElement = document.getElementById("scoreVal");
-        const hiScoreElement = document.getElementById("hiScoreVal");
+        const scoreVal = document.getElementById("scoreVal");
+        const hiScoreVal = document.getElementById("hiScoreVal");
 
-        // 像素设置：屏幕更小，网格更少，像素点更大
-        const grid = 16; // 每个像素方块的大小
-        const tileCount = canvas.width / grid; // 20x20 的网格
-        let count = 0;
-        let score = 0;
+        let grid = 15, count = 0, score = 0, gameState = 0; // 0:准备, 1:运行, 2:结束
         let hiScore = localStorage.getItem("snakeHiScore") || 0;
-        hiScoreElement.innerHTML = hiScore;
-        
-        let snake = {
-            x: grid * 5,
-            y: grid * 5,
-            dx: grid,
-            dy: 0,
-            cells: [],
-            maxCells: 4
-        };
+        hiScoreVal.innerHTML = hiScore;
 
-        let food = { x: 0, y: 0 };
-        // 游戏状态：0-等待开始，1-运行中，2-游戏结束
-        let gameState = 0; 
+        let snake = { x: 150, y: 150, dx: grid, dy: 0, cells: [], maxCells: 4 };
+        let food = { x: 60, y: 60 };
 
-        function getRandomInt(min, max) {
-            return Math.floor(Math.random() * (max - min)) + min;
-        }
+        function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min)) + min; }
 
-        // 放置食物，确保不在蛇身上
-        function placeFood() {
-            let validPosition = false;
-            while (!validPosition) {
-                food.x = getRandomInt(0, tileCount) * grid;
-                food.y = getRandomInt(0, tileCount) * grid;
-                validPosition = true;
-                snake.cells.forEach(cell => {
-                    if (cell.x === food.x && cell.y === food.y) validPosition = false;
-                });
+        function startGame() {
+            if (score > hiScore) { 
+                hiScore = score; 
+                localStorage.setItem("snakeHiScore", hiScore); 
+                hiScoreVal.innerHTML = hiScore; 
             }
+            snake = { x: 150, y: 150, dx: grid, dy: 0, cells: [], maxCells: 4 };
+            score = 0; 
+            scoreVal.innerHTML = score; 
+            gameState = 1;
+            canvas.style.borderColor = "#2c3e50";
         }
 
-        function resetGame() {
-            if (score > hiScore) {
-                hiScore = score;
-                localStorage.setItem("snakeHiScore", hiScore);
-                hiScoreElement.innerHTML = hiScore;
-            }
-            snake.x = grid * 5;
-            snake.y = grid * 5;
-            snake.cells = [];
-            snake.maxCells = 4;
-            snake.dx = grid;
-            snake.dy = 0;
-            score = 0;
-            scoreElement.innerHTML = score;
-            placeFood();
-            gameState = 0; // 回到等待开始状态
+        function drawOverlay(title, sub) {
+            ctx.fillStyle = "rgba(149, 165, 166, 0.8)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#2c3e50";
+            ctx.font = "40px 'VT323'";
+            ctx.textAlign = "center";
+            ctx.fillText(title, canvas.width/2, canvas.height/2 - 10);
+            ctx.font = "20px 'VT323'";
+            ctx.fillText(sub, canvas.width/2, canvas.height/2 + 25);
         }
 
-        // 核心渲染循环
         function loop() {
             requestAnimationFrame(loop);
-
-            // 1. 速度控制 (更慢，更复古)
-            if (++count < 8) { return; }
+            if (++count < 8) return;
             count = 0;
-
-            // 2. 清除屏幕 (画布本身有背景色，只需清除)
             ctx.clearRect(0,0,canvas.width,canvas.height);
 
             if (gameState === 0) {
-                ctx.fillStyle = "#333";
-                ctx.font = "30px 'VT323'";
-                ctx.textAlign = "center";
-                ctx.fillText("PRESS ANY KEY", canvas.width/2, canvas.height/2);
+                drawOverlay("READY?", "PRESS START BUTTON");
                 return;
             }
 
-            // 3. 移动蛇
+            if (gameState === 2) {
+                drawOverlay("GAME OVER", "SCORE: " + score + " | RESTART?");
+                return;
+            }
+
+            // 移动逻辑
             snake.x += snake.dx;
             snake.y += snake.dy;
 
-            // 穿墙处理
-            if (snake.x < 0) snake.x = canvas.width - grid;
+            // 穿墙
+            if (snake.x < 0) snake.x = canvas.width - grid; 
             else if (snake.x >= canvas.width) snake.x = 0;
-            if (snake.y < 0) snake.y = canvas.height - grid;
+            if (snake.y < 0) snake.y = canvas.height - grid; 
             else if (snake.y >= canvas.height) snake.y = 0;
 
-            // 记录轨迹
             snake.cells.unshift({x: snake.x, y: snake.y});
-            if (snake.cells.length > snake.maxCells) { snake.cells.pop(); }
+            if (snake.cells.length > snake.maxCells) snake.cells.pop();
 
-            // 4. 绘制食物
-            // 为了更像像素风，我们画一个稍微小一点的圆角矩形
-            ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--food-color');
-            const foodPadding = 2;
-            ctx.fillRect(food.x + foodPadding, food.y + foodPadding, grid - foodPadding*2, grid - foodPadding*2);
+            // 画食物
+            ctx.fillStyle = "#a93226";
+            ctx.fillRect(food.x+2, food.y+2, grid-4, grid-4);
 
-            // 5. 绘制蛇
-            const headColor = getComputedStyle(document.documentElement).getPropertyValue('--snake-head');
-            const bodyColor = getComputedStyle(document.documentElement).getPropertyValue('--snake-body');
-
-            snake.cells.forEach(function(cell, index) {
-                // 蛇头和蛇身不同色
-                ctx.fillStyle = (index === 0) ? headColor : bodyColor;
-                
-                // 绘制像素块，留出1px缝隙
+            // 画蛇
+            snake.cells.forEach((cell, index) => {
+                ctx.fillStyle = (index === 0) ? "#1e3718" : "#2c5e1c";
                 ctx.fillRect(cell.x, cell.y, grid-1, grid-1);
 
-                // 碰撞检测：吃到食物
+                // 吃到食物
                 if (cell.x === food.x && cell.y === food.y) {
                     snake.maxCells++;
                     score += 10;
-                    scoreElement.innerHTML = score;
-                    placeFood();
+                    scoreVal.innerHTML = score;
+                    food.x = getRandomInt(0, 20) * grid;
+                    food.y = getRandomInt(0, 20) * grid;
                 }
 
-                // 碰撞检测：撞到自己
+                // 撞到自己
                 for (let i = index + 1; i < snake.cells.length; i++) {
                     if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
-                        gameState = 2; // Game Over
-                        setTimeout(resetGame, 1500); // 1.5秒后重置
+                        gameState = 2;
+                        canvas.style.borderColor = "#e74c3c"; // 撞击瞬间红框反馈
                     }
                 }
             });
-
-            if (gameState === 2) {
-                ctx.fillStyle = "#a93226";
-                ctx.font = "40px 'VT323'";
-                ctx.textAlign = "center";
-                ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
-            }
         }
 
-        // 输入处理函数
         function handleInput(dir) {
-            if (gameState === 0) gameState = 1; // 任意键开始
-            if (gameState === 2) return;     // 游戏结束时不响应
-
-            if (dir === 'left' && snake.dx === 0) {
-                snake.dx = -grid; snake.dy = 0;
-            } else if (dir === 'up' && snake.dy === 0) {
-                snake.dy = -grid; snake.dx = 0;
-            } else if (dir === 'right' && snake.dx === 0) {
-                snake.dx = grid; snake.dy = 0;
-            } else if (dir === 'down' && snake.dy === 0) {
-                snake.dy = grid; snake.dx = 0;
-            }
+            if (gameState !== 1) return;
+            if (dir === 'up' && snake.dy === 0) { snake.dy = -grid; snake.dx = 0; }
+            if (dir === 'down' && snake.dy === 0) { snake.dy = grid; snake.dx = 0; }
+            if (dir === 'left' && snake.dx === 0) { snake.dx = -grid; snake.dy = 0; }
+            if (dir === 'right' && snake.dx === 0) { snake.dx = grid; snake.dy = 0; }
         }
 
-        // --- 键盘监听 ---
-        document.addEventListener('keydown', function(e) {
-            const keyMap = { 37: 'left', 38: 'up', 39: 'right', 40: 'down' };
-            if (keyMap[e.which]) {
-                e.preventDefault(); // 防止方向键滚动页面
-                handleInput(keyMap[e.which]);
+        // 键盘支持
+        document.addEventListener('keydown', e => {
+            if (gameState !== 1) {
+                if(e.which === 13 || e.which === 32) startGame();
             }
+            const keys = {38:'up', 40:'down', 37:'left', 39:'right'};
+            if (keys[e.which]) handleInput(keys[e.which]);
         });
 
-        // --- 屏幕按钮监听 (移动端适配) ---
-        const btnMap = {
-            'btn-up': 'up', 'btn-down': 'down', 
-            'btn-left': 'left', 'btn-right': 'right'
-        };
-
-        Object.keys(btnMap).forEach(btnId => {
-            const btn = document.getElementById(btnId);
-            // 同时监听 touchstart (手机) 和 mousedown (PC调试)
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(btnMap[btnId]); });
-            btn.addEventListener('mousedown', () => { handleInput(btnMap[btnId]); });
+        // 按钮支持
+        const btns = { 'btn-up':'up', 'btn-down':'down', 'btn-left':'left', 'btn-right':'right' };
+        Object.keys(btns).forEach(id => {
+            const el = document.getElementById(id);
+            el.onmousedown = (e) => { e.preventDefault(); handleInput(btns[id]); };
+            el.ontouchstart = (e) => { e.preventDefault(); handleInput(btns[id]); };
         });
+        document.getElementById('btn-reset').onclick = startGame;
 
-        document.getElementById('btn-reset').addEventListener('click', resetGame);
-
-        // 启动
-        placeFood();
         requestAnimationFrame(loop);
-
     </script>
 </body>
 </html>
